@@ -1,0 +1,7 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+  "python.terminal.activateEnvironment": true,
+  "terminal.integrated.defaultProfile.windows": "Command Prompt",
+  "files.exclude": { "**/__pycache__": true },
+  "search.exclude": { "**/.venv": true, "**/downloaded_model": true }
+}

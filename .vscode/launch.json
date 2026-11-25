@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Ball detector: camera",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/detect_ball.py",
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "Ball detector: verify model",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/detect_ball.py",
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "args": ["--check"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    }
+  ]
+}
