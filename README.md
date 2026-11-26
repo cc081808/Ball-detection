@@ -1,5 +1,10 @@
 # Ball detection
 
+**VEX integration:** See [VEX_SERIAL_SETUP.md](VEX_SERIAL_SETUP.md). The separate
+`vex-receiver` project targets the owner's empty slot 1 and starts with motors
+disabled. Run `3 - Start VEX link.cmd` after downloading that receiver. The
+ordinary camera-only launcher continues to work as before.
+
 Windows camera preview with a trained ping-pong ball detector. The included
 `downloaded_model/weights.pt` runs locally with Ultralytics. Camo Studio is
 selected by default when its camera is available.
