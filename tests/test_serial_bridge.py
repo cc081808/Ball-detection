@@ -52,6 +52,61 @@ class SteeringTests(unittest.TestCase):
 
 
 class LinkTests(unittest.TestCase):
+    def test_v4_continuous_steering_packet_and_stop(self):
+        port, link = self.make_link([b"BALL_SERIAL_V4 DRIVE\n", b"ACK S\n", b"ACK V\n"])
+        self.assertTrue(link.supports_vision_priority)
+        link.send_vision("L", -350)
+        self.assertEqual(port.writes[-1], b"V L -350 0\n")
+        link.close()
+        self.assertEqual(port.writes[-1], b"X")
+
+    def test_v4_near_packet(self):
+        port, link = self.make_link([b"BALL_SERIAL_V4 DRIVE\n", b"ACK S\n", b"ACK V\n"])
+        link.send_vision("F", 50, True)
+        self.assertEqual(port.writes[-1], b"V F 50 1\n")
+
+    def test_v3_cannot_accept_new_packets(self):
+        port, link = self.make_link([b"BALL_SERIAL_V3 DRIVE\n", b"ACK S\n"])
+        self.assertFalse(link.supports_vision_priority)
+        with self.assertRaisesRegex(RuntimeError, "vision-first"):
+            link.send_vision("F")
+        self.assertEqual(port.writes, [b"?", b"S"])
+
+    def test_invalid_vision_packet_is_not_sent(self):
+        port, link = self.make_link([b"BALL_SERIAL_V4 DRIVE\n", b"ACK S\n"])
+        for command, error, near in [("F", 1001, False), ("L", -300, True),
+                                     ("X", 0, False), ("F", float("nan"), False), ("N", 0, True)]:
+            with self.assertRaises(ValueError):
+                link.send_vision(command, error, near)
+        self.assertEqual(port.writes, [b"?", b"S"])
+
+    def test_vision_packet_needs_matching_ack(self):
+        port, link = self.make_link([b"BALL_SERIAL_V4 DRIVE\n", b"ACK S\n", b"ACK F\n"])
+        with self.assertRaisesRegex(RuntimeError, "acknowledgement"):
+            link.send_vision("F")
+
+    def test_v3_close_requests_mission_stop(self):
+        port, link = self.make_link([b"BALL_SERIAL_V3 DRIVE\n", b"ACK S\n"])
+        self.assertTrue(link.supports_area)
+        link.close()
+        self.assertEqual(port.writes[-1], b"X")
+
+    def test_v3_stop_acknowledged(self):
+        port, link = self.make_link([b"BALL_SERIAL_V3 DRIVE\n", b"ACK S\n", b"ACK X\n"])
+        link.send("X")
+        self.assertEqual(port.writes[-1], b"X")
+    def test_v2_search_and_finish_need_matching_ack(self):
+        port, link = self.make_link([b"BALL_SERIAL_V2 DRIVE\n", b"ACK S\n", b"ACK N\n", b"ACK C\n"])
+        link.send("N")
+        link.send("C")
+        self.assertEqual(port.writes, [b"?", b"S", b"N", b"C"])
+
+    def test_v1_never_receives_new_movement_commands(self):
+        port, link = self.make_link([b"BALL_SERIAL_V1 DRIVE\n", b"ACK S\n"])
+        with self.assertRaisesRegex(RuntimeError, "Update slot 4"):
+            link.send("C")
+        self.assertEqual(port.writes, [b"?", b"S"])
+
     def make_link(self, chunks):
         port = FakeSerial(chunks)
         link = BrainLink("FAKE", serial_factory=lambda *a, **k: port)

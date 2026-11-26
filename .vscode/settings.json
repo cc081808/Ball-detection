@@ -3,5 +3,9 @@
   "python.terminal.activateEnvironment": true,
   "terminal.integrated.defaultProfile.windows": "Command Prompt",
   "files.exclude": { "**/__pycache__": true },
-  "search.exclude": { "**/.venv": true, "**/downloaded_model": true }
+  "search.exclude": {
+    "**/.venv": true,
+    "**/downloaded_model": true
+  },
+  "python-envs.defaultEnvManager": "ms-python.python:system"
 }

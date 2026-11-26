@@ -1,73 +1,146 @@
-# VEX serial integration test
+# Distance-sensor collector with CV confirmation — slot 4
 
-The laptop detects balls and sends L (left), R (right), F (forward), or S (stop).
-The receiver is a separate IQ2 C++ project in `vex-receiver` named `ball-serial`.
-It targets **slot 4**, confirmed empty by the owner. Preserve every other slot,
-including the latest ping-pong collector and manual-drive program.
+The original uploaded collector controls searching, target positions, turns,
+forward motion and intake. The camera answers only: is there a plausible ping-pong
+ball at the candidate the robot has aimed toward? It does not steer the robot.
 
-## First test: no motor movement
+## Install and run
 
-1. Turn on the Brain and connect it directly to the laptop using a USB data cable.
-2. Run `4 - Open VEX receiver.cmd`. This opens a separate VS Code window for
-   `vex-receiver`. Keep the detector open in its original VS Code window.
-3. In the receiver window, check that the selected project is `ball-serial` and
-   the destination is **slot 4**. Build and download using the VEX extension.
-   The extension must not download the old collector project by mistake.
-   `Build receiver.cmd` is an alternative local build command; it never downloads.
-4. Run `ball-serial` from slot 4 on the Brain. It displays TEST and Motors disabled.
-5. Close/disconnect any VEX User Terminal or serial monitor so Python can use the
-   user port. The receiver project disables the extension's user terminal by default.
-6. Open Camo Studio with its live preview, then run `3 - Start VEX link.cmd` in
-   the detector folder. Select the Camo camera. A unique VEX User Port is selected
-   automatically; otherwise choose its number from the displayed COM port list.
-7. Move a ball left, centre, and right. The preview and Brain screen should show
-   L, F, and R. Remove the ball: S. Motors remain disabled throughout this test.
-8. Press Q/Esc in the camera preview to stop. The Brain also stops motion commands
-   after 300 ms without a valid received command. F-Up, the bumper, or the Touch LED
-   ends the receiver program and requires restarting it.
+1. Quit the detector with Q. In the normal Ball-detection cmd terminal, run:
+   `cmd /c "5 - Update slot 4.cmd"`
+2. Wait for build/download success. Only program slot 4 is targeted.
+3. Run `cmd /c "3 - Start VEX link.cmd"`, select Camo, and verify
+   **Connected: BALL_SERIAL_V5 DRIVE**. The new script rejects older steering firmware.
+4. Use the original V4 start position: bottom-right corner facing along the area,
+   rear about 150 mm from the bottom edge. Keep the robot still.
+5. Tap Touch LED, wait for calibration, then at **SENSOR + CV V5.1 / Press TouchLED**
+   press and release Touch LED again. No controller is needed.
+6. Touch LED or Brain Check stops. Q/Esc/closing the detector sends mission stop.
 
-The Brain was enumerated as COM7 (communications/download) and COM8 (user) during
-setup. Port numbers can change. Python uses the **user** port, not communications.
+Keep the Python serial script running; Camo Studio alone does not send observations
+to the Brain. If it is missing, V5.1 waits on WAIT FOR CAMERA / Run PC script 3 with
+motors stopped. It does not bounce back to IDLE or recalibrate. Once connected,
+press and release Touch LED to start. A held button or connection alone cannot
+start the robot. Check returns to the menu; Brain Left then selects the original
+sensor-only program, which does not need the Python script.
 
-## Commands in the detector terminal
+The original area remains 6 m by 5 m, with five-minute/ten-ball limits. Allow
+sufficient space and USB cable reach. The computer and phone supply confirmation;
+the Brain runs the motion code. A count is an estimated collection based on a
+completed drive-through, not an intake sensor proving a capture.
 
-```bat
-.venv\Scripts\python.exe detect_ball.py --list-ports
-.venv\Scripts\python.exe detect_ball.py --serial
-.venv\Scripts\python.exe detect_ball.py --port COM8
-```
+## Candidate check
 
-The ordinary `2 - Start detector.cmd` remains camera-only. The existing model,
-Roboflow downloader, collector source, and installed robot programs are preserved.
+| Stage | Behaviour |
+|---|---|
+| TO_STOP / SCAN_360 | Original lane search and distance-sensor width detection |
+| AIM CANDIDATE | Original sensor-based turn toward the stored target |
+| CHECK BALL (CV), purple LED | Wheels stopped; examine fresh camera observations |
+| COLLECT BALL, blue LED | Approved: original drive-through and intake |
+| CV SKIP: NO MATCH | Unconfirmed: exclude the spot for this mission, resume searching |
+| CV unavailable | No fresh confirmation data at the check: stop and restart after restoring it |
 
-## After the display-only test passes
+A sensor candidate must pass before collection. The camera cannot create targets
+or interrupt the route to chase something else.
 
-The compiled default is `ENABLE_MOTORS = false` in `vex-receiver/include/config.h`.
-Changing it to true and rebuilding/downloading slot 4 enables a deliberately slow
-approach test. Motion also requires a connected VEX controller with **E-Up held**.
-Releasing E-Up stops drive and intake. F-Up, bumper, or Touch LED ends the program.
+The check starts after the sensor-based aiming turn has settled. It ignores
+frames captured before the check's additional 150 ms settling interval, counts
+distinct serial observations and requires two consecutive positives. Frames over
+750 ms old cannot approve anything. Total checking time is capped at 1.5 seconds.
+This permits normal CPU capture/inference latency while the wheels are stationary;
+the post-aim capture requirement still rejects frames from the preceding turn.
 
-Ports and directions match the existing collector's configuration: left motor
-12 normal, right motor 8 reversed, intake 11 reversed, bumper 5, Touch LED 4.
-Turning uses 10%, forward uses 15%, and intake runs at 100% only while approaching.
-These values are in config.h. This is an integration prototype, not the original
-distance-sensor autonomous collector and not a complete collection strategy.
+Default camera filtering requires a model confidence of at least 0.50, a roughly
+round detection box (width/height 0.6 to 1.6), and its centre inside the orange band
+covering the central 15% of the image. Two eligible balls in that band are treated
+as ambiguous. A high-confidence ball elsewhere in the image cannot approve a
+central chair leg. The Brain counts the fresh consecutive observations; the
+preview alone is not proof that the current candidate has passed.
 
-The camera must face forward on the robot. If the incoming video is mirrored,
-use `--mirror-steering`; verify steering direction before a floor test.
+The preview's Brain line is the actual reported mission stage, not inferred from
+a camera box. Its Last check line keeps the most recent confirmation outcome
+visible after scanning resumes. The CV line explains no box, low confidence,
+outside check zone, rejected box shape, or multiple eligible balls. A 70–80%
+detection already passes the confidence threshold; other checks still apply.
 
-## Protocol and failure handling
+The weights match the saved repository model byte-for-byte. Confidence scores can
+vary with the input image; changing the cutoff changes which boxes are shown,
+not their scores. The serial cutoff is restored to the saved version's 0.50;
+the standalone preview remains at 0.25.
 
-Python first sends `?`; only the new receiver answers `BALL_SERIAL_V1 TEST` or
-`BALL_SERIAL_V1 DRIVE`. An unidentified receiver receives no movement commands.
-Each command requires an `ACK L/R/F/S` reply before another frame is sent. ACK
-confirms receipt, not physical motor movement. There is never a separate heartbeat
-that keeps an old camera command alive. Low frame rate can therefore cause stops.
+After approval, the original encoder/gyro drive-through, 400 mm roll-over and
+intake routine complete independently of visual detection. A lost box does not
+cancel it. Original bumper, distance-to-obstacle, stall, time and physical-stop
+checks still apply. There is no camera-controlled blind-forward timer.
 
-The receiver uses a serial-reading thread and a separate 20 ms control loop, so
-waiting for a serial byte does not stop the watchdog or physical stop checks.
-The laptop uses a 50% detection confidence threshold for serial mode and a centre
-band of +/-15% of the image half-width. No detection or invalid coordinates send S.
+Camera loss does not switch into unfiltered collection. Searching may continue,
+but the next candidate cannot pass without fresh confirmation and stops the
+mission if confirmation data is unavailable. Closing the detector normally sends
+X immediately; unplugging USB may prevent that message, so use the physical stop
+when needed. Brain Left deliberately selects the unfiltered original mode.
 
-Tests: `.venv\Scripts\python.exe -m unittest discover -s tests -v`.
-Model-only check: `.venv\Scripts\python.exe detect_ball.py --check`.
+## Phone alignment and limits
+
+Keep the phone at a consistent position and angle relative to the robot, turning
+it with the robot. During CHECK BALL, the orange band should cover the particular
+object the robot is facing. A rigid mount makes this repeatable. Holding the phone
+independently can cause real balls to be rejected or the wrong object to be checked.
+
+If the camera is offset, adjust the band centre without changing motor aiming:
+`.venv\Scripts\python.exe detect_ball.py --serial --verify-centre 0.55`.
+The default is 0.50. Band width can be adjusted with `--verify-width` (default
+0.15); widening it makes unrelated-ball confirmation more likely.
+`--confidence` adjusts the model threshold (serial default 0.50).
+
+The supplied weights were not retrained, and no measured detection-accuracy gain
+is claimed. A model can still mislabel a chair part as a ball. This visual check
+also cannot distinguish objects at different depths on the same sight line
+without camera calibration/depth information. A real ball outside the view or
+missed by the detector will be skipped. Check the preview alignment using a real
+ball before judging collection performance.
+
+## Preserved code and controls
+
+The original source remains exactly in
+`vex-receiver/reference/collector_v4_original.iqcpp`, and the Downloads original
+and slot 1 have not been changed. Lane/stop calculations, scan sweeps, sensor
+segmentation, ball list, aiming, speed profile, drive-through and backoff match
+the original after device-name and logging substitutions. Original numeric and
+boolean tuning settings are retained. The original gyro test, settling and dwell
+are restored. The added stationary candidate check is the intended new behaviour.
+
+Shared hardware: left motor 12, right motor 8, intake 11, distance 7, bumper 5,
+Touch LED 4, and built-in inertial sensor. Shared intake reversed=true/forward
+preserves the original reversed=false/reverse direction.
+
+| Input from IDLE | Mode |
+|---|---|
+| Touch LED, or optional controller E-Up | Original collector with CV confirmation |
+| Brain Left, or optional controller L-Up | Original sensor-only collector |
+| Optional controller E-Down | Manual drive |
+
+Both autonomous modes calibrate and require a fresh Touch LED press to start.
+The previous camera-driving demo is removed from the selectable controls.
+Necessary integration changes also reset state for repeat runs, bound calibration,
+reserve serial for acknowledgements and add physical/remote stops.
+
+## Protocol and verification
+
+V5 handshake: `BALL_SERIAL_V5 DRIVE` (TEST if motor enabling is disabled).
+Each frame sends `B 1 120\n` for an eligible ball or `B 0 120\n` for no match;
+120 is the measured capture/processing age in milliseconds. Complete valid
+packets receive `ACK B <stage>|<last check>\n` in V5.1. Earlier V5's bare `ACK B\n`
+is also accepted by the laptop. Only the reader thread writes replies so status
+cannot interleave with acknowledgements. Receipt age is added on the Brain, and each packet gets
+a distinct observation number. Partial packets never refresh observation state.
+No motion values are transmitted. Old L/R/F/N/C steering bytes cannot approve
+a target or control motors. X requests mission stop; S invalidates observations.
+
+Python checks:
+`.venv\Scripts\python.exe -m unittest discover -s tests -v`.
+Firmware compile-time tests cover fresh post-aim observations, repeated-packet
+rejection, consecutive positives, stale data and stop priority.
+ARM source/object compilation succeeds in the agent session. The session's
+Windows linker previously failed with error 623; updater 5 runs the full
+build/download in the normal terminal. Physical chair-leg rejection and collection
+still need a test on the robot.

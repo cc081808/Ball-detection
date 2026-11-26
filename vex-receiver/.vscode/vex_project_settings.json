@@ -1,13 +1,19 @@
 {
-  "extension": {"version": "0.8.2026020401", "json": 2},
-  "project": {
-    "name": "ball-serial",
-    "description": "Camera serial TEST receiver. Slot 4 confirmed empty by owner. Preserve all other slots.",
-    "creationDate": "2026-11-25",
-    "platform": "IQ2",
-    "language": "cpp",
-    "slot": 4,
-    "sdkVersion": "IQ2_20250520_15_00_00",
-    "cpp": {"includePath": [], "printf_float": false}
-  }
+	"extension": {
+		"version": "0.8.2026020401",
+		"json": 2
+	},
+	"project": {
+		"name": "ball-serial",
+		"description": "Slot 4: original distance-sensor collector with optional CV confirmation. Brain Left selects sensor-only mode.",
+		"creationDate": "2026-11-25",
+		"platform": "IQ2",
+		"language": "cpp",
+		"slot": 4,
+		"sdkVersion": "IQ2_20250520_15_00_00",
+		"cpp": {
+			"includePath": [],
+			"printf_float": false
+		}
+	}
 }

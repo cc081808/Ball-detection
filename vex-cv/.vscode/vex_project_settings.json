@@ -1,0 +1,11 @@
+{
+  "extension": {"version": "0.8.2026020401", "json": 2},
+  "project": {
+    "name": "cv-collector",
+    "description": "Independent slot 5: CV coordinates control pursuit; measured pickup finish and area search.",
+    "creationDate": "2026-11-26",
+    "platform": "IQ2", "language": "cpp", "slot": 5,
+    "sdkVersion": "IQ2_20250520_15_00_00",
+    "cpp": {"includePath": [], "printf_float": false}
+  }
+}

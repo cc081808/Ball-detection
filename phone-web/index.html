@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Robot camera</title>
+<style>
+body{margin:0;background:#101820;color:#edf5ff;font:17px system-ui,sans-serif;padding:22px;max-width:700px;margin:auto}
+h1{margin:8px 0}p{line-height:1.5;color:#c6d5e5}video{width:100%;border-radius:16px;background:#000;max-height:65vh;object-fit:contain}
+button{border:0;border-radius:12px;padding:15px 20px;font:inherit;background:#62e8b0;color:#082a20;margin:10px 8px 10px 0}
+button:disabled{opacity:.5}#stop{background:#ffd8c8}#status{padding:12px;background:#223141;border-radius:10px}small{color:#aac0d3}
+</style></head><body>
+<h1>Robot camera</h1><p>Keep this phone mounted, with the rear camera facing forward and down.</p>
+<video id="video" autoplay muted playsinline></video>
+<div><button id="start">Start camera</button><button id="stop" disabled>Stop camera</button></div>
+<p id="status">Scan the pairing QR code on your laptop, then tap Start camera.</p>
+<small>Keep this page open and the screen awake. The laptop performs detection. Stopping the camera stops fresh robot commands.</small>
+<script src="/camera.js"></script></body></html>

@@ -1,0 +1,13 @@
+{
+  "calibrated": false,
+  "aim_x": 0.5,
+  "commit_y": 0.78,
+  "finish_mm": 200,
+  "area_length_mm": 2000,
+  "area_width_mm": 2000,
+  "steer_sign": 1,
+  "approach_mm_s": 240,
+  "pickup_mm_s": 120,
+  "acquire_confidence": 0.5,
+  "retain_confidence": 0.3
+}
