@@ -70,7 +70,7 @@ class BrainLink:
                     return bytes(line)
             if len(pending) > 256:
                 raise RuntimeError("Unexpected serial data; check the selected port")
-        raise RuntimeError("No receiver reply. Run ball-serial in slot 1, select its user/console COM port, and close the VEX serial monitor.")
+        raise RuntimeError("No receiver reply. Run ball-serial in slot 4, select its user/console COM port, and close the VEX serial monitor.")
 
     def send(self, command):
         if command not in ("L", "R", "F", "S"):

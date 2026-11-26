@@ -2,7 +2,7 @@
 
 The laptop detects balls and sends L (left), R (right), F (forward), or S (stop).
 The receiver is a separate IQ2 C++ project in `vex-receiver` named `ball-serial`.
-It targets **slot 1**, confirmed empty by the owner. Preserve every other slot,
+It targets **slot 4**, confirmed empty by the owner. Preserve every other slot,
 including the latest ping-pong collector and manual-drive program.
 
 ## First test: no motor movement
@@ -11,10 +11,10 @@ including the latest ping-pong collector and manual-drive program.
 2. Run `4 - Open VEX receiver.cmd`. This opens a separate VS Code window for
    `vex-receiver`. Keep the detector open in its original VS Code window.
 3. In the receiver window, check that the selected project is `ball-serial` and
-   the destination is **slot 1**. Build and download using the VEX extension.
+   the destination is **slot 4**. Build and download using the VEX extension.
    The extension must not download the old collector project by mistake.
    `Build receiver.cmd` is an alternative local build command; it never downloads.
-4. Run `ball-serial` from slot 1 on the Brain. It displays TEST and Motors disabled.
+4. Run `ball-serial` from slot 4 on the Brain. It displays TEST and Motors disabled.
 5. Close/disconnect any VEX User Terminal or serial monitor so Python can use the
    user port. The receiver project disables the extension's user terminal by default.
 6. Open Camo Studio with its live preview, then run `3 - Start VEX link.cmd` in
@@ -43,7 +43,7 @@ Roboflow downloader, collector source, and installed robot programs are preserve
 ## After the display-only test passes
 
 The compiled default is `ENABLE_MOTORS = false` in `vex-receiver/include/config.h`.
-Changing it to true and rebuilding/downloading slot 1 enables a deliberately slow
+Changing it to true and rebuilding/downloading slot 4 enables a deliberately slow
 approach test. Motion also requires a connected VEX controller with **E-Up held**.
 Releasing E-Up stops drive and intake. F-Up, bumper, or Touch LED ends the program.
 
